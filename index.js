@@ -182,21 +182,6 @@ app.get('/customer', async (req, res) => {
   }
 });
 
-app.post('/customer/login', async (req, res) => {
-  try {
-    const { user_name, password } = req.body;  // Lấy id từ URL
-    const customer = await Customer.findOne({ user_name: user_name, password: password }).select('-password');  // Tìm customer có user_name bằng với id
-
-    if (customer) {
-      res.json(customer);  // Nếu tìm thấy, trả về dữ liệu customer
-    } else {
-      res.status(404).send('username or password is incorrect!');  // Nếu không tìm thấy, trả về 404
-    }
-  } catch (error) {
-    res.status(500).send(error);  // Xử lý lỗi
-  }
-});
-
 app.get('/Beach', async (req, res) => {
   try {
     const allBeach = await Beach.find();
@@ -218,6 +203,44 @@ app.get('/customer/:id', async (req, res) => {
     }
   } catch (error) {
     res.status(500).send(error);  // Xử lý lỗi
+  }
+});
+
+// xử lí đăng nhập
+app.post('/customer/login', async (req, res) => {
+  try {
+    const { user_name, password } = req.body;  // Lấy id từ URL
+    const customer = await Customer.findOne({ user_name: user_name, password: password }).select('-password');  // Tìm customer có user_name bằng với id
+
+    if (customer) {
+      res.json(customer);  // Nếu tìm thấy, trả về dữ liệu customer
+    } else {
+      res.status(404).send('username or password is incorrect!');  // Nếu không tìm thấy, trả về 404
+    }
+  } catch (error) {
+    res.status(500).send(error);  // Xử lý lỗi
+  }
+});
+
+// xử lí đăng kí tài khoản mới
+app.post('/register', async (req, res) => {
+  const { avatar, user_name, password , phone_number, location, gender} = req.body;
+
+  try {
+    // Kiểm tra tên người dùng đã tồn tại
+    const existingUser = await Customer.findOne({ user_name });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Tên người dùng đã tồn tại!' });
+    }
+
+    // Nếu chưa tồn tại, tạo tài khoản mới
+    const newUser = new Customer({ avatar, user_name, password , phone_number, location, gender});
+    await newUser.save();
+
+    res.status(201).json({ message: 'Đăng ký thành công!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Đã xảy ra lỗi, vui lòng thử lại!' });
   }
 });
 
