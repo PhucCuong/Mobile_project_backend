@@ -138,12 +138,30 @@ const customerSchema = new mongoose.Schema({
   gender: String,
 });
 
+// Tạo schema cho tourlist
+const tourlistSchema = new mongoose.Schema({
+  img: String,
+  tourist_name: String,
+  location: String,
+  distance: String,
+  description: String,
+  price: String,
+  benerfics: [String],
+  like_user: [
+    {
+      avatar: String,
+      user_name: String
+    }
+  ]
+});
+
 // Tạo model từ schema
 const Restaurant = mongoose.model('Restaurant', restaurantSchema);
 const Hotel = mongoose.model('Hotel', hotelSchema);
 const CoffeeShop = mongoose.model('CoffeeShop', coffeeShopSchema);
 const Customer = mongoose.model('Customer', customerSchema);
 const Beach = mongoose.model('Beach', beachSchema)
+const Tourist = mongoose.model('Tourist', tourlistSchema)
 
 // Endpoint để lấy danh sách tất cả các địa điểm
 app.get('/Restaurant', async (req, res) => {
