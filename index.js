@@ -20,53 +20,53 @@ mongoose
   });
 // Tạo schema cho bãi biển
 const beachSchema = new mongoose.Schema({
-      location: String,
-       name: String,
-       address: String,
-       image: String,
-       description:String,
-       interact: [
-        {
-            likes: Number,
-            shares: Number,
-            reviews: Number,
+  location: String,
+  name: String,
+  address: String,
+  image: String,
+  description: String,
+  interact: [
+    {
+      likes: Number,
+      shares: Number,
+      reviews: Number,
 
-        }
-      ]
+    }
+  ]
 });
 
 // Tạo schema cho nhà hàng
 const restaurantSchema = new mongoose.Schema({
-  
-      location: String,
-      name: String,
-      address: String,
-      total_tables: Number,
-      image:String,
-      description:String,
-      phone:String,    
-      noithat: String,
-      foods: [
-        {
-          name: String,
-          price: String,
-        }
-      ],
-      tables: [
-        {
-          tableName: String,
-          available: Boolean
-        }
-      ],
-      interact: [
-        {
-            likes: Number,
-            shares: Number,
-            reviews: Number,
 
-        }
-      ]
-    
+  location: String,
+  name: String,
+  address: String,
+  total_tables: Number,
+  image: String,
+  description: String,
+  phone: String,
+  noithat: String,
+  foods: [
+    {
+      name: String,
+      price: String,
+    }
+  ],
+  tables: [
+    {
+      tableName: String,
+      available: Boolean
+    }
+  ],
+  interact: [
+    {
+      likes: Number,
+      shares: Number,
+      reviews: Number,
+
+    }
+  ]
+
 });
 
 // Tạo schema cho khách sạn
@@ -75,23 +75,23 @@ const hotelSchema = new mongoose.Schema({
   name: String,
   address: String,
   total_rooms: Number,
-  image:String,
-  description:String,
-  phone:String,
+  image: String,
+  description: String,
+  phone: String,
   interact: Number,
   noithat: String,
   rooms: [
     {
       name_room: String,
       available_room: Boolean,
-      price: String   
+      price: String
     }
   ],
   interact: [
     {
-        likes: Number,
-        shares: Number,
-        reviews: Number,
+      likes: Number,
+      shares: Number,
+      reviews: Number,
 
     }
   ]
@@ -102,9 +102,9 @@ const coffeeShopSchema = new mongoose.Schema({
   name: String,
   address: String,
   total_tables: Number,
-  image:String,  
-  description:String,
-  phone:String,
+  image: String,
+  description: String,
+  phone: String,
   interact: Number,
   noithat: String,
   drinks: [
@@ -121,19 +121,21 @@ const coffeeShopSchema = new mongoose.Schema({
   ],
   interact: [
     {
-        likes: Number,
-        shares: Number,
-        reviews: Number,
+      likes: Number,
+      shares: Number,
+      reviews: Number,
 
     }
   ]
 });
 
 const customerSchema = new mongoose.Schema({
-  avatar:String,
-  username: String,
-  password: String
-  
+  avatar: String,
+  user_name: String,
+  password: String,
+  phone_number: String,
+  location: String,
+  gender: String,
 });
 
 // Tạo model từ schema
@@ -171,7 +173,7 @@ app.get('/CoffeeShop', async (req, res) => {
   }
 });
 
-app.get('/Customer', async (req, res) => {
+app.get('/customer', async (req, res) => {
   try {
     const allCustomer = await Customer.find();
     res.json(allCustomer);
@@ -179,12 +181,43 @@ app.get('/Customer', async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+app.post('/customer/login', async (req, res) => {
+  try {
+    const { user_name, password } = req.body;  // Lấy id từ URL
+    const customer = await Customer.findOne({ user_name: user_name, password: password }).select('-password');  // Tìm customer có user_name bằng với id
+
+    if (customer) {
+      res.json(customer);  // Nếu tìm thấy, trả về dữ liệu customer
+    } else {
+      res.status(404).send('username or password is incorrect!');  // Nếu không tìm thấy, trả về 404
+    }
+  } catch (error) {
+    res.status(500).send(error);  // Xử lý lỗi
+  }
+});
+
 app.get('/Beach', async (req, res) => {
   try {
     const allBeach = await Beach.find();
     res.json(allBeach);
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+app.get('/customer/:id', async (req, res) => {
+  try {
+    const { id } = req.params;  // Lấy user_name từ URL
+    const customer = await Customer.findOne({ _id: id }).select('-password');  // Tìm customer có user_name bằng với user_name
+
+    if (customer) {
+      res.json(customer);  // Nếu tìm thấy, trả về dữ liệu customer
+    } else {
+      res.status(404).send('Customer not found');  // Nếu không tìm thấy, trả về 404
+    }
+  } catch (error) {
+    res.status(500).send(error);  // Xử lý lỗi
   }
 });
 
@@ -239,13 +272,13 @@ app.post('/Customer', async (req, res) => {
 app.put('/api/Restaurant/:id', async (req, res) => {
   try {
     const restaurantId = req.params.id;
-    
+
     // Tìm và cập nhật tài liệu dựa trên ID
     const updatedRestaurant = await Restaurant.findByIdAndUpdate(restaurantId, req.body, {
       new: true,        // Trả về tài liệu đã được cập nhật
       runValidators: true // Chạy các validate trên dữ liệu mới
     });
-    
+
     if (!updatedRestaurant) {
       return res.status(404).send({ message: 'Restaurant not found' });
     }
@@ -258,13 +291,13 @@ app.put('/api/Restaurant/:id', async (req, res) => {
 app.put('/api/Hotel/:id', async (req, res) => {
   try {
     const hotelId = req.params.id;
-    
+
     // Tìm và cập nhật tài liệu dựa trên ID
     const updatedHotel = await Hotel.findByIdAndUpdate(hotelId, req.body, {
       new: true,        // Trả về tài liệu đã được cập nhật
       runValidators: true // Chạy các validate trên dữ liệu mới
     });
-    
+
     if (!updatedHotel) {
       return res.status(404).send({ message: 'Restaurant not found' });
     }
@@ -277,13 +310,13 @@ app.put('/api/Hotel/:id', async (req, res) => {
 app.put('/api/CoffeeShop/:id', async (req, res) => {
   try {
     const coffeeShopId = req.params.id;
-    
+
     // Tìm và cập nhật tài liệu dựa trên ID
     const updatedCoffeeShop = await CoffeeShop.findByIdAndUpdate(coffeeShopId, req.body, {
       new: true,        // Trả về tài liệu đã được cập nhật
       runValidators: true // Chạy các validate trên dữ liệu mới
     });
-    
+
     if (!updatedCoffeeShop) {
       return res.status(404).send({ message: 'Restaurant not found' });
     }
