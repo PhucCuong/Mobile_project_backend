@@ -224,7 +224,7 @@ app.post('/customer/login', async (req, res) => {
 
 // xử lí đăng kí tài khoản mới
 app.post('/register', async (req, res) => {
-  const { avatar, user_name, password , phone_number, location, gender} = req.body;
+  const { avatar, user_name, password, phone_number, location, gender } = req.body;
 
   try {
     // Kiểm tra tên người dùng đã tồn tại
@@ -234,7 +234,7 @@ app.post('/register', async (req, res) => {
     }
 
     // Nếu chưa tồn tại, tạo tài khoản mới
-    const newUser = new Customer({ avatar, user_name, password , phone_number, location, gender});
+    const newUser = new Customer({ avatar, user_name, password, phone_number, location, gender });
     await newUser.save();
 
     res.status(201).json({ message: 'Đăng ký thành công!' });
@@ -311,6 +311,31 @@ app.put('/api/Restaurant/:id', async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+// update thông tin user
+app.put('/customer/:user_name', async (req, res) => {
+  const userName = req.params.user_name; // Lấy user_name từ URL
+  const updatedData = req.body; // Dữ liệu mới để cập nhật
+
+  try {
+    // Tìm và cập nhật thông tin khách hàng
+    const result = await Customer.findOneAndUpdate(
+      { user_name: userName },
+      updatedData,
+      { new: true } // Trả về document đã được cập nhật
+    );
+
+    if (!result) {
+      return res.status(404).json({ message: 'Khách hàng không tìm thấy' });
+    }
+
+    res.status(200).json(result); // Trả về kết quả cập nhật
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Có lỗi xảy ra' });
+  }
+});
+
 app.put('/api/Hotel/:id', async (req, res) => {
   try {
     const hotelId = req.params.id;
