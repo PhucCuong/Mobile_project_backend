@@ -234,6 +234,17 @@ app.get('/tourlist', async (req, res) => {
   }
 });
 
+// xử lí get detail tourlist
+app.get('/tourlist/:id', async (req, res) => {
+  const tourlist_id = req.params.id
+  try {
+    const detailTourlist = await Tourlist.findOne({_id: tourlist_id});
+    res.json(detailTourlist);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 // xử lí đăng nhập
 app.post('/customer/login', async (req, res) => {
   try {
