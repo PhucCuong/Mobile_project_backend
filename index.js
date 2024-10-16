@@ -161,7 +161,7 @@ const Hotel = mongoose.model('Hotel', hotelSchema);
 const CoffeeShop = mongoose.model('CoffeeShop', coffeeShopSchema);
 const Customer = mongoose.model('Customer', customerSchema);
 const Beach = mongoose.model('Beach', beachSchema)
-const Tourist = mongoose.model('Tourist', tourlistSchema)
+const Tourlist = mongoose.model('Tourlist', tourlistSchema)
 
 // Endpoint để lấy danh sách tất cả các địa điểm
 app.get('/Restaurant', async (req, res) => {
@@ -221,6 +221,16 @@ app.get('/customer/:id', async (req, res) => {
     }
   } catch (error) {
     res.status(500).send(error);  // Xử lý lỗi
+  }
+});
+
+// xử lí nhận tourlist
+app.get('/tourlist', async (req, res) => {
+  try {
+    const allTourList = await Tourlist.find();
+    res.json(allTourList);
+  } catch (error) {
+    res.status(500).send(error);
   }
 });
 
@@ -306,6 +316,41 @@ app.post('/Customer', async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+// xử lí khi user like tourlist
+app.put('/tourlist/like/:_id_tourlist', async (req, res) => {
+  try {
+    const tourlist_id = req.params._id_tourlist;
+    const user_like = req.body
+
+    const one_tourlist = await Tourlist.findById(tourlist_id)
+
+    if (!one_tourlist) {
+      return res.status(404).send({ message: 'Tourlist not found' });
+    }
+
+    // Kiểm tra nếu người dùng đã like
+    const itemIndex = one_tourlist.like_user.findIndex(item => item.user_name === user_like.user_name);
+
+    if (itemIndex === -1) {
+      // Nếu user không tồn tại trong mảng like_user, thêm user vàos
+      one_tourlist.like_user.push(user_like);
+    } else {
+      // Nếu user đã tồn tại trong mảng like_user, xóa user khỏi mảng
+      one_tourlist.like_user.splice(itemIndex, 1);
+    }
+
+    // Cập nhật tài liệu
+    const updatedTourlist = await one_tourlist.save(); // Lưu các thay đổi
+
+    const allTourList = await Tourlist.find();
+
+    res.status(200).json(allTourList);
+  } catch (error) {
+    console.error('Error occurred:', error); // Log lỗi chi tiết
+    res.status(500).send({ message: 'Internal server error', error: error.message });
   }
 });
 
