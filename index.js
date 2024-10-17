@@ -1,3 +1,4 @@
+const { ObjectId } = require('bson');
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
@@ -152,6 +153,12 @@ const tourlistSchema = new mongoose.Schema({
       avatar: String,
       user_name: String
     }
+  ],
+  booked_user: [
+    {
+      user_name: String,
+      avatar: String,
+    }
   ]
 });
 
@@ -238,7 +245,7 @@ app.get('/tourlist', async (req, res) => {
 app.get('/tourlist/:id', async (req, res) => {
   const tourlist_id = req.params.id
   try {
-    const detailTourlist = await Tourlist.findOne({_id: tourlist_id});
+    const detailTourlist = await Tourlist.findOne({ _id: tourlist_id });
     res.json(detailTourlist);
   } catch (error) {
     res.status(500).send(error);
@@ -361,6 +368,29 @@ app.put('/tourlist/like/:_id_tourlist', async (req, res) => {
     res.status(200).json(allTourList);
   } catch (error) {
     console.error('Error occurred:', error); // Log lỗi chi tiết
+    res.status(500).send({ message: 'Internal server error', error: error.message });
+  }
+});
+
+// xử lí khi user booked tourlist
+app.put('/tourlist/booked/:id_tourlist', async (req, res) => {
+  try {
+    const tourlist_id = req.params.id_tourlist;
+    const booked_user = req.body;
+
+    // Tìm tourlist theo ID
+    const one_tourlist = await Tourlist.findById(tourlist_id);
+    if (!one_tourlist) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+
+    // Thêm người dùng vào danh sách booked_user
+    one_tourlist.booked_user.push(booked_user);
+    const updated_tourlist = await one_tourlist.save();
+
+    res.status(200).json(updated_tourlist);
+  } catch (error) {
+    console.error('Error occurred:', error);
     res.status(500).send({ message: 'Internal server error', error: error.message });
   }
 });
