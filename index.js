@@ -40,13 +40,12 @@ const beachSchema = new mongoose.Schema({
 const restaurantSchema = new mongoose.Schema({
 
   location: String,
-  name: String,
+  category_name: String,
   address: String,
   total_tables: Number,
-  image: String,
+  img: String,
   description: String,
   phone: String,
-  noithat: String,
   foods: [
     {
       name: String,
@@ -56,7 +55,16 @@ const restaurantSchema = new mongoose.Schema({
   tables: [
     {
       tableName: String,
-      available: Boolean
+      available: Boolean,
+      booked_user: [
+        {
+          fullName: String,
+          user_name: String,
+          dateText: String,
+          timeText: String,
+          price: String
+        }
+      ]
     }
   ],
   interact: [
@@ -412,6 +420,51 @@ app.put('/tourlist/booked/:id_tourlist', async (req, res) => {
     res.status(500).send({ message: 'Internal server error', error: error.message });
   }
 });
+
+// xử lí khi gọi booking restaurant
+app.put('/restaurant/booking/:restaurant_id/:table_id', async (req, res) => {
+  try {
+    const restaurant_id = req.params.restaurant_id
+    const table_id = req.params.table_id
+
+    const fullName = req.body.fullName
+    const user_name = req.body.user_name
+    const dateText = req.body.dateText
+    const timeText = req.body.timeText
+    const price = req.body.price
+
+    const booked_user = {
+      fullName,
+      user_name,
+      dateText,
+      timeText,
+      price
+    }
+
+    const restaurant = await Restaurant.findOne({_id : restaurant_id})
+
+    if (!restaurant) {
+      return res.status(404).json({ message: 'Restaurant not found' });
+    }
+
+    
+    const index_table = restaurant.tables.findIndex(item => item._id == table_id)
+    console.log(index_table)
+
+    if(index_table === -1) {
+      return res.status(404).json({ message: 'Table not found' });
+    }
+
+    restaurant.tables[index_table].available = false
+    restaurant.tables[index_table].booked_user.push(booked_user)
+    await restaurant.save();
+
+    res.status(200).json();
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 
 // Update dữ liệu 
 app.put('/api/Restaurant/:id', async (req, res) => {
