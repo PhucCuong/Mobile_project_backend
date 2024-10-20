@@ -252,6 +252,24 @@ app.get('/tourlist/:id', async (req, res) => {
   }
 });
 
+// xử lí booking restaurant
+app.get('/booking/restaurant/:id_restaurant', async (req, res) => {
+  const restaurant_id = req.params.id_restaurant
+  try {
+    const detailRestaurant = await Restaurant.findOne({ _id: restaurant_id });
+    // Kiểm tra nếu detailRestaurant và tables tồn tại
+    if (!detailRestaurant || !detailRestaurant.tables) {
+      return res.status(404).json({ message: 'Restaurant not found or no tables available' });
+    }
+
+    // Lọc các bàn có available === true
+    const availableTables = detailRestaurant.tables.filter(item => item.available === true);
+    res.json(availableTables)
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 // xử lí đăng nhập
 app.post('/customer/login', async (req, res) => {
   try {
