@@ -118,14 +118,12 @@ const hotelSchema = new mongoose.Schema({
 
 const coffeeShopSchema = new mongoose.Schema({
   location: String,
-  name: String,
+  category_name: String,
   address: String,
   total_tables: Number,
-  image: String,
+  img: String,
   description: String,
   phone: String,
-  interact: Number,
-  noithat: String,
   drinks: [
     {
       name_drink: String,
@@ -135,7 +133,17 @@ const coffeeShopSchema = new mongoose.Schema({
   tables: [
     {
       tableName: String,
-      available: Boolean
+      available: Boolean,
+      book_user: [
+        {
+          fullName: String,
+          user_name: String,
+          phone_number: String,
+          date_to_come: String,
+          time_to_come: String,
+          time_booking: String
+        }
+      ]
     }
   ],
   interact: [
@@ -301,6 +309,24 @@ app.get('/booking/hotel/:id_hotel', async (req, res) => {
     // Lọc các bàn có available === true
     const availableRooms = detailHotel.rooms.filter(item => item.available_room === true);
     res.json(availableRooms)
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// xử lí booking coffee
+app.get('/booking/coffee/:id_coffee', async (req, res) => {
+  const coffee_id = req.params.id_coffee
+  try {
+    const detailCoffee = await CoffeeShop.findOne({ _id: coffee_id });
+    // Kiểm tra nếu detailRestaurant và tables tồn tại
+    if (!detailCoffee || !detailCoffee.tables) {
+      return res.status(404).json({ message: 'Coffee not found or no table available' });
+    }
+
+    // Lọc các bàn có available === true
+    const availableTable = detailCoffee.tables.filter(item => item.available === true);
+    res.json(availableTable)
   } catch (error) {
     res.status(500).send(error);
   }
@@ -556,6 +582,63 @@ app.put('/hotel/booking/:hotel_id/', async (req, res) => {
       }
     })
     await hotel.save();
+
+    res.status(200).json();
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// xử lí khi gọi booking coffee
+app.put('/coffee/booking/:coffee_id/', async (req, res) => {
+  try {
+    const coffee_id = req.params.coffee_id
+
+    const fullName = req.body.fullName
+    const user_name = req.body.user_name
+    const phone_number = req.body.phoneNumber
+    const dateText = req.body.dateText
+    const timeText = req.body.timeText
+    const tableArrayId = req.body.tableArray
+
+    function getCurrentDateTimeString() {
+      const now = new Date();
+
+      const day = String(now.getDate()).padStart(2, '0'); 
+      const month = String(now.getMonth() + 1).padStart(2, '0'); 
+      const year = now.getFullYear(); 
+      const hours = String(now.getHours()).padStart(2, '0'); 
+      const minutes = String(now.getMinutes()).padStart(2, '0'); 
+      const seconds = String(now.getSeconds()).padStart(2, '0'); 
+
+      return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    }
+
+    const booked_user = {
+      fullName,
+      user_name,
+      phone_number,
+      date_to_come: dateText,
+      time_to_come: timeText,
+      time_booking: getCurrentDateTimeString()
+    }
+
+    const coffeeShop = await CoffeeShop.findOne({ _id: coffee_id })
+    
+    if (!coffeeShop) {
+      return res.status(404).json({ message: 'Coffee shop not found' });
+    }
+
+    tableArrayId.map((item) => {
+      const indexTable = coffeeShop.tables.findIndex(i => i._id == item)
+      if (indexTable === -1) {
+        res.status(404).json({ message: `table id : ${item} not found` });
+      } else {
+        coffeeShop.tables[indexTable].available = false
+        coffeeShop.tables[indexTable].book_user.push(booked_user)
+      }
+    })
+    await coffeeShop.save();
 
     res.status(200).json();
   } catch (error) {
