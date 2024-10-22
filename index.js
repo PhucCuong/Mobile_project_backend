@@ -22,9 +22,9 @@ mongoose
 // Tạo schema cho bãi biển
 const beachSchema = new mongoose.Schema({
   location: String,
-  name: String,
+  category_name: String,
   address: String,
-  image: String,
+  img: String,
   description: String,
   interact: [
     {
@@ -327,6 +327,29 @@ app.get('/booking/coffee/:id_coffee', async (req, res) => {
     // Lọc các bàn có available === true
     const availableTable = detailCoffee.tables.filter(item => item.available === true);
     res.json(availableTable)
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// xử lí call api lấy list tourlist đã like////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+app.get('/liked/:user_name', async (req, res) => {
+  const user_name = req.params.user_name
+  try {
+    const allTourList = await Tourlist.find();
+    // Kiểm tra nếu detailRestaurant và tables tồn tại
+    if (!allTourList) {
+      return res.status(404).json({ message: 'Tourlist not found' });
+    }
+
+    function checkUserName(allTourList, name) {
+      return allTourList.filter(tour => 
+        tour.like_user.some(user => user.user_name === name)
+      );
+    }
+
+    const responseArray = checkUserName(allTourList, user_name)
+    res.json(responseArray)
   } catch (error) {
     res.status(500).send(error);
   }
