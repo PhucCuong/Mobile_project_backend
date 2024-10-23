@@ -46,6 +46,7 @@ const restaurantSchema = new mongoose.Schema({
   img: String,
   description: String,
   phone: String,
+  type: String,
   foods: [
     {
       name: String,
@@ -89,6 +90,7 @@ const hotelSchema = new mongoose.Schema({
   description: String,
   phone: String,
   noithat: String,
+  type: String,
   rooms: [
     {
       name_room: String,
@@ -124,6 +126,7 @@ const coffeeShopSchema = new mongoose.Schema({
   img: String,
   description: String,
   phone: String,
+  type: String,
   drinks: [
     {
       name_drink: String,
@@ -173,6 +176,7 @@ const tourlistSchema = new mongoose.Schema({
   distance: String,
   description: String,
   price: String,
+  type: String,
   benerfics: [String],
   like_user: [
     {
@@ -332,18 +336,18 @@ app.get('/booking/coffee/:id_coffee', async (req, res) => {
   }
 });
 
-// xử lí call api lấy list tourlist đã like////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// xử lí call api lấy list tourlist đã like
 app.get('/liked/:user_name', async (req, res) => {
   const user_name = req.params.user_name
   try {
     const allTourList = await Tourlist.find();
     // Kiểm tra nếu detailRestaurant và tables tồn tại
     if (!allTourList) {
-      return res.status(404).json({ message: 'Tourlist not found' });
+      return res.status(404).json({ message: 'Liked list not found' });
     }
 
     function checkUserName(allTourList, name) {
-      return allTourList.filter(tour => 
+      return allTourList.filter(tour =>
         tour.like_user.some(user => user.user_name === name)
       );
     }
@@ -352,6 +356,76 @@ app.get('/liked/:user_name', async (req, res) => {
     res.json(responseArray)
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+// xử lí call api lấy list booked của user
+app.get('/booked/:user_name', async (req, res) => {
+  const user_name = req.params.user_name
+  try {
+    const allTourList = await Tourlist.find();
+    const allRestaurant = await Restaurant.find()
+    const allHotel = await Hotel.find()
+    const allCoffeeShop = await CoffeeShop.find()
+
+    if (!allTourList && !allRestaurant && !allHotel && !allCoffeeShop) {
+      return res.status(404).json({ message: 'Booked list not found' });
+    }
+
+    const checkUserNameOfRestaurant = (allRestaurant, name) => {
+      return allRestaurant.filter(rest =>
+        rest.tables.some(table => table.book_user.some(user =>
+          user.user_name === name
+        ))
+      );
+    }
+
+    const checkUserOfCoffee = (allCoffeeShop, name) => {
+      return allCoffeeShop.filter(coffeeshop =>
+        coffeeshop.tables.some(table =>
+          table.book_user.some(user =>
+            user.user_name === name
+          )
+        )
+      )
+    }
+
+    const checkUserOfHotel = (allHotel, name) => {
+      return allHotel.filter(hotel =>
+        hotel.rooms.some(room =>
+          room.book_user.some(
+            user => user.user_name === name
+          )
+        )
+      )
+    }
+
+    function checkUserNameOfTourlist(allTourList, name) {
+      return allTourList.filter(tour =>
+        tour.like_user.some(user => user.user_name === name)
+      );
+    }
+
+    const arrayOfRestaurant = checkUserNameOfRestaurant(allRestaurant, user_name);
+
+    const arrayOfHotel = checkUserOfHotel(allHotel, user_name);
+
+    const arrayOfCoffeeShop = checkUserOfCoffee(allCoffeeShop, user_name);
+
+    const arrayOfTourlist = checkUserNameOfTourlist(allTourList, user_name);
+
+    
+
+    const responseArray = [
+      ...arrayOfRestaurant,
+      ...arrayOfHotel,
+      ...arrayOfCoffeeShop,
+      ...arrayOfTourlist
+    ];
+
+    res.json(responseArray)
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
@@ -513,12 +587,12 @@ app.put('/restaurant/booking/:restaurant_id/', async (req, res) => {
     function getCurrentDateTimeString() {
       const now = new Date();
 
-      const day = String(now.getDate()).padStart(2, '0'); 
-      const month = String(now.getMonth() + 1).padStart(2, '0'); 
-      const year = now.getFullYear(); 
-      const hours = String(now.getHours()).padStart(2, '0'); 
-      const minutes = String(now.getMinutes()).padStart(2, '0'); 
-      const seconds = String(now.getSeconds()).padStart(2, '0'); 
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
 
       return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     }
@@ -570,12 +644,12 @@ app.put('/hotel/booking/:hotel_id/', async (req, res) => {
     function getCurrentDateTimeString() {
       const now = new Date();
 
-      const day = String(now.getDate()).padStart(2, '0'); 
-      const month = String(now.getMonth() + 1).padStart(2, '0'); 
-      const year = now.getFullYear(); 
-      const hours = String(now.getHours()).padStart(2, '0'); 
-      const minutes = String(now.getMinutes()).padStart(2, '0'); 
-      const seconds = String(now.getSeconds()).padStart(2, '0'); 
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
 
       return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     }
@@ -627,12 +701,12 @@ app.put('/coffee/booking/:coffee_id/', async (req, res) => {
     function getCurrentDateTimeString() {
       const now = new Date();
 
-      const day = String(now.getDate()).padStart(2, '0'); 
-      const month = String(now.getMonth() + 1).padStart(2, '0'); 
-      const year = now.getFullYear(); 
-      const hours = String(now.getHours()).padStart(2, '0'); 
-      const minutes = String(now.getMinutes()).padStart(2, '0'); 
-      const seconds = String(now.getSeconds()).padStart(2, '0'); 
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
 
       return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     }
@@ -647,7 +721,7 @@ app.put('/coffee/booking/:coffee_id/', async (req, res) => {
     }
 
     const coffeeShop = await CoffeeShop.findOne({ _id: coffee_id })
-    
+
     if (!coffeeShop) {
       return res.status(404).json({ message: 'Coffee shop not found' });
     }
