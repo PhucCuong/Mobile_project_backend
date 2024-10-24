@@ -402,7 +402,7 @@ app.get('/booked/:user_name', async (req, res) => {
 
     function checkUserNameOfTourlist(allTourList, name) {
       return allTourList.filter(tour =>
-        tour.like_user.some(user => user.user_name === name)
+        tour.booked_user.some(user => user.user_name === name)
       );
     }
 
